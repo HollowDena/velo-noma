@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { home } from '@/routes';
 import type { AuthLayoutProps, SharedData } from '@/types';
+import { BikeIcon } from 'lucide-react';
 
 export default function AuthSplitLayout({
     children,
@@ -18,7 +19,7 @@ export default function AuthSplitLayout({
                     href={home()}
                     className="relative z-20 flex items-center text-lg font-medium"
                 >
-                    <AppLogoIcon className="mr-2 size-8 fill-current text-white" />
+                    <BikeIcon className="mr-2 size-8 fill-current text-white" />
                     {name}
                 </Link>
             </div>
