@@ -15,7 +15,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
-COPY . .
+COPY public .
 
 # PHP deps (needed so artisan can run)
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
