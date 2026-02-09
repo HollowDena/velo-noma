@@ -1,17 +1,17 @@
 <?php
 
+use App\Http\Controllers\BicycleController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RentalController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
-Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
+Route::get('/', [BicycleController::class, 'index'])
+    ->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::post('/rentals', [RentalController::class, 'store'])
+        ->name('rentals.store');
+});
 
 require __DIR__.'/settings.php';
