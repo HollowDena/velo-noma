@@ -35,7 +35,7 @@ RUN npm run build
 
 
 # ----- Runtime stage -----
-FROM php:8.3-cli-bookworm-slim AS runtime
+FROM php:8.3-cli-alpine AS runtime
 WORKDIR /var/www/html
 COPY --from=build /var/www/html /var/www/html
 
