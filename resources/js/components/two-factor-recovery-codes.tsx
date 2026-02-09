@@ -57,11 +57,10 @@ export default function TwoFactorRecoveryCodes({
             <CardHeader>
                 <CardTitle className="flex gap-3">
                     <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA Recovery Codes
+                    2FA atjaunošanas kodi
                 </CardTitle>
                 <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
+                    Atjaunošanas kodi ļauj atgūt piekļuvi, ja zaudējat 2FA ierīci. Glabājiet tos drošā paroļu pārvaldniekā.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -76,7 +75,7 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} Recovery Codes
+                        {codesAreVisible ? 'Slēpt' : 'Skatīt'} atjaunošanas kodus
                     </Button>
 
                     {canRegenerateCodes && (
@@ -92,7 +91,7 @@ export default function TwoFactorRecoveryCodes({
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> Regenerate Codes
+                                    <RefreshCw /> Ģenerēt kodus vēlreiz
                                 </Button>
                             )}
                         </Form>
@@ -112,7 +111,7 @@ export default function TwoFactorRecoveryCodes({
                                     ref={codesSectionRef}
                                     className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
                                     role="list"
-                                    aria-label="Recovery codes"
+                                    aria-label="Atjaunošanas kodi"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
@@ -127,7 +126,7 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            aria-label="Atjaunošanas kodu ielāde"
                                         >
                                             {Array.from(
                                                 { length: 8 },
@@ -145,13 +144,11 @@ export default function TwoFactorRecoveryCodes({
 
                                 <div className="text-xs text-muted-foreground select-none">
                                     <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
+                                        Katru atjaunošanas kodu var izmantot vienu reizi, lai piekļūtu kontam; pēc lietošanas tas tiks noņemts. Ja nepieciešami vairāk, noklikšķiniet uz{' '}
                                         <span className="font-bold">
-                                            Regenerate Codes
+                                            Ģenerēt kodus vēlreiz
                                         </span>{' '}
-                                        above.
+                                        augstāk.
                                     </p>
                                 </div>
                             </>

@@ -10,15 +10,14 @@ import { send } from '@/routes/verification';
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
         <AuthLayout
-            title="Verify email"
-            description="Please verify your email address by clicking on the link we just emailed to you."
+            title="Apstipriniet e-pastu"
+            description="Lūdzu, apstipriniet e-pasta adresi, noklikšķinot uz saites, ko tikko nosūtījām."
         >
-            <Head title="Email verification" />
+            <Head title="E-pasta apstiprinājums" />
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                    Jauna apstiprinājuma saite ir nosūtīta uz reģistrācijas laikā norādīto e-pasta adresi.
                 </div>
             )}
 
@@ -27,14 +26,14 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <Spinner />}
-                            Resend verification email
+                            Nosūtīt apstiprinājuma e-pastu vēlreiz
                         </Button>
 
                         <TextLink
                             href={logout()}
                             className="mx-auto block text-sm"
                         >
-                            Log out
+                            Iziet
                         </TextLink>
                     </>
                 )}

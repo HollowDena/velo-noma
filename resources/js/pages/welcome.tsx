@@ -2,12 +2,20 @@ import { Head, router } from '@inertiajs/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
-import { BikeCard } from '@/components/BikeCard'
+import { BikeCard } from '@/components/bike-card'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
 import AppLayout from '@/layouts/app-layout'
+import { colorToLatvian } from '@/lib/colors-lv'
 import { home } from '@/routes'
 import type { BreadcrumbItem } from '@/types'
 
@@ -23,20 +31,42 @@ type Bicycle = {
 
 type PageProps = {
     bicycles: Bicycle[]
-    filters: { start?: string | null; end?: string | null; search?: string | null }
+    filters: {
+        start?: string | null
+        end?: string | null
+        search?: string | null
+        color?: string | null
+        frame_size?: string | null
+    }
+    filter_options: { colors: string[]; frame_sizes: string[] }
     auth: { user?: any | null }
     errors?: Record<string, string>
 }
 
 const DEBOUNCE_MS = 400
 
-export default function Welcome({ bicycles, filters, auth, errors = {} }: PageProps) {
+const FRAME_SIZE_LABELS: Record<string, string> = {
+    S: 'Mazs',
+    M: 'Vidējs',
+    L: 'Liels',
+    XL: 'Ļoti liels',
+}
+
+export default function Welcome({
+    bicycles,
+    filters,
+    filter_options,
+    auth,
+    errors = {},
+}: PageProps) {
     const [start, setStart] = useState(filters.start ?? '')
     const [end, setEnd] = useState(filters.end ?? '')
     const [search, setSearch] = useState(filters.search ?? '')
     const [debouncedSearch, setDebouncedSearch] = useState(filters.search ?? '')
+    const [color, setColor] = useState(filters.color ?? '')
+    const [frameSize, setFrameSize] = useState(filters.frame_size ?? '')
     const [clientError, setClientError] = useState<string | null>(null)
-    const [processing, setProcessing] = useState(false)
+    const [processingBicycleId, setProcessingBicycleId] = useState<number | null>(null)
 
     const canSearch = useMemo(() => start.length > 0 && end.length > 0, [start, end])
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -52,10 +82,15 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
         if (start) params.start = start
         if (end) params.end = end
         if (debouncedSearch) params.search = debouncedSearch
+        if (color) params.color = color
+        if (frameSize) params.frame_size = frameSize
 
         const doRequest = () => {
             setClientError(null)
-            const query = start && end ? params : debouncedSearch ? { search: debouncedSearch } : {}
+            const query =
+                start && end
+                    ? params
+                    : { ...(debouncedSearch ? { search: debouncedSearch } : {}), ...(color ? { color } : {}), ...(frameSize ? { frame_size: frameSize } : {}) }
             router.get('/', query, { preserveState: true, preserveScroll: true })
         }
 
@@ -77,7 +112,7 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
         isInitialMount.current = false
         const id = setTimeout(doRequest, DEBOUNCE_MS)
         return () => clearTimeout(id)
-    }, [start, end, debouncedSearch])
+    }, [start, end, debouncedSearch, color, frameSize])
 
     function clear() {
         setClientError(null)
@@ -85,6 +120,8 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
         setEnd('')
         setSearch('')
         setDebouncedSearch('')
+        setColor('')
+        setFrameSize('')
         router.get('/', {}, { preserveState: true, preserveScroll: true })
     }
 
@@ -96,14 +133,14 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
             return
         }
 
-        setProcessing(true)
+        setProcessingBicycleId(bicycleId)
         router.post(
             '/rentals',
             { bicycle_id: bicycleId, start, end },
             {
                 preserveScroll: true,
-                onFinish: () => setProcessing(false),
-                onError: () => setProcessing(false),
+                onFinish: () => setProcessingBicycleId(null),
+                onError: () => setProcessingBicycleId(null),
             }
         )
     }
@@ -151,16 +188,54 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
                             </p>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 items-end">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6 items-end">
                         <div className="space-y-2">
                             <Label htmlFor="search">Meklēt</Label>
                             <Input
                                 id="search"
                                 type="search"
-                                placeholder="Zīmols, modelis, krāsa..."
+                                placeholder="Zīmols, modelis..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="color">Krāsa</Label>
+                            <Select
+                                value={color || 'all'}
+                                onValueChange={(v) => setColor(v === 'all' ? '' : v)}
+                            >
+                                <SelectTrigger id="color">
+                                    <SelectValue placeholder="Visas krāsas" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Visas krāsas</SelectItem>
+                                    {filter_options.colors.map((c) => (
+                                        <SelectItem key={c} value={c}>
+                                            {colorToLatvian(c)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="frame_size">Rāmja izmērs</Label>
+                            <Select
+                                value={frameSize || 'all'}
+                                onValueChange={(v) => setFrameSize(v === 'all' ? '' : v)}
+                            >
+                                <SelectTrigger id="frame_size">
+                                    <SelectValue placeholder="Visi izmēri" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Visi izmēri</SelectItem>
+                                    {filter_options.frame_sizes.map((s) => (
+                                        <SelectItem key={s} value={s}>
+                                            {FRAME_SIZE_LABELS[s] ?? s}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="start">No</Label>
@@ -197,7 +272,7 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
                         </AlertTitle>
                         {!start && !end && (
                             <AlertDescription>
-                                Izvēlies sākuma un beigu datumu/laiku augstāk un nospied „Meklēt brīvos”, lai redzētu, kuri velosipēdi ir pieejami.
+                                Izvēlies sākuma un beigu datumu/laiku augstāk, lai redzētu, kuri velosipēdi ir pieejami.
                             </AlertDescription>
                         )}
                     </Alert>
@@ -239,7 +314,7 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
                                     onReserve={() => reserve(b.id)}
                                     isLoggedIn={!!auth.user}
                                     hasPeriodSelected={!!start && !!end}
-                                    isProcessing={processing}
+                                    isProcessing={processingBicycleId === b.id}
                                 />
                             ))}
                         </div>
@@ -255,10 +330,10 @@ export default function Welcome({ bicycles, filters, auth, errors = {} }: PagePr
                     </section>
                 </div>
 
-                <footer className="bg-slate-900 text-white py-12">
+                <footer className="bg-background text-foreground py-12 border-t border-border">
                     <div className="container mx-auto px-4 text-center">
                         <p className="text-xl font-bold tracking-tight">VELO NOMA</p>
-                        <p className="mt-4 text-slate-400 text-sm">
+                        <p className="mt-4 text-muted-foreground text-sm">
                             © {new Date().getFullYear()} Velo noma. Visas tiesības aizsargātas.
                         </p>
                     </div>

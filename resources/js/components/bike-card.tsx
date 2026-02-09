@@ -2,7 +2,6 @@ import { Bike } from 'lucide-react'
 import { colorToLatvian } from '@/lib/colors-lv'
 import { Button } from './ui/button'
 
-
 type Bicycle = {
     id: number
     brand: string

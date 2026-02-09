@@ -13,6 +13,8 @@ class BicycleController extends Controller
         $start = $request->date('start');
         $end = $request->date('end');
         $search = $request->string('search')->trim();
+        $color = $request->string('color')->trim();
+        $frameSize = $request->string('frame_size')->trim();
         $hasPeriod = $start && $end;
 
         $query = Bicycle::query()->where('active', true);
@@ -25,6 +27,14 @@ class BicycleController extends Controller
                     ->orWhere('color', 'like', $term)
                     ->orWhere('frame_size', 'like', $term);
             });
+        }
+
+        if ($color->isNotEmpty()) {
+            $query->where('color', $color->toString());
+        }
+
+        if ($frameSize->isNotEmpty()) {
+            $query->where('frame_size', $frameSize->toString());
         }
 
         if ($hasPeriod) {
@@ -45,13 +55,21 @@ class BicycleController extends Controller
             return $data;
         });
 
+        $filterOptions = [
+            'colors' => Bicycle::query()->where('active', true)->distinct()->pluck('color')->sort()->values()->all(),
+            'frame_sizes' => Bicycle::query()->where('active', true)->distinct()->pluck('frame_size')->filter()->sort()->values()->all(),
+        ];
+
         return Inertia::render('welcome', [
             'bicycles' => $bicycles,
             'filters' => [
                 'start' => optional($start)->toDateTimeString(),
                 'end' => optional($end)->toDateTimeString(),
                 'search' => $search->toString() ?: null,
+                'color' => $color->toString() ?: null,
+                'frame_size' => $frameSize->toString() ?: null,
             ],
+            'filter_options' => $filterOptions,
             'auth' => [
                 'user' => $request->user(),
             ],
