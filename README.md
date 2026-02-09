@@ -47,7 +47,7 @@ Velosipēdu nomas sistēma — tīmekļa lietotne velosipēdu apskatīšanai, re
 4. Palaid Sail un migrācijas:
    ```bash
    vendor/bin/sail up -d
-   vendor/bin/sail artisan migrate --force
+   vendor/bin/sail artisan migrate
    ```
 
 5. Konfigurē `.env` ar MySQL parametriem (DB_CONNECTION=mysql, DB_DATABASE, DB_USERNAME, DB_PASSWORD utt.).
@@ -75,7 +75,7 @@ composer install
 cp .env.example .env
 php artisan key:generate
 # Konfigurē .env (DB_CONNECTION=mysql, DB_DATABASE, DB_USERNAME, DB_PASSWORD)
-php artisan migrate --force
+php artisan migrate 
 php artisan db:seed
 npm install
 npm run build
