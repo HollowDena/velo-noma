@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import { ClipboardList, Search, Trash2 } from 'lucide-react'
+import { ConfirmCancelReservationDialog } from '@/components/confirm-cancel-reservation-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,9 @@ type PageProps = {
 export default function AdminRentalsIndex({ rentals, filters }: PageProps) {
     const [search, setSearch] = useState(filters.search ?? '')
     const [debouncedSearch, setDebouncedSearch] = useState(filters.search ?? '')
+    const [confirmCancelOpen, setConfirmCancelOpen] = useState(false)
+    const [rentalIdToCancel, setRentalIdToCancel] = useState<number | null>(null)
+    const [cancellingRentalId, setCancellingRentalId] = useState<number | null>(null)
     const isFirstRun = useRef(true)
 
     useEffect(() => {
@@ -47,10 +51,22 @@ export default function AdminRentalsIndex({ rentals, filters }: PageProps) {
         { title: 'Rezervācijas', href: '/admin/rentals' },
     ]
 
-    function cancel(rentalId: number) {
-        if (confirm('Vai tiešām atcelt šo rezervāciju?')) {
-            router.delete(`/admin/rentals/${rentalId}`, { preserveScroll: true })
-        }
+    function requestCancel(rentalId: number) {
+        setRentalIdToCancel(rentalId)
+        setConfirmCancelOpen(true)
+    }
+
+    function confirmCancel() {
+        if (rentalIdToCancel === null) return
+        setCancellingRentalId(rentalIdToCancel)
+        router.delete(`/admin/rentals/${rentalIdToCancel}`, {
+            preserveScroll: true,
+            onFinish: () => {
+                setCancellingRentalId(null)
+                setRentalIdToCancel(null)
+            },
+            onError: () => setCancellingRentalId(null),
+        })
     }
 
     return (
@@ -98,17 +114,18 @@ export default function AdminRentalsIndex({ rentals, filters }: PageProps) {
                                                 {r.user.name} ({r.user.email})
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {new Date(r.starts_at).toLocaleString('lv-LV')} –{' '}
-                                                {new Date(r.ends_at).toLocaleString('lv-LV')}
+                                                {new Date(r.starts_at).toLocaleDateString('lv-LV')} –{' '}
+                                                {new Date(r.ends_at).toLocaleDateString('lv-LV')}
                                             </p>
                                         </div>
                                         <Button
                                             variant="destructive"
                                             size="sm"
-                                            onClick={() => cancel(r.id)}
+                                            onClick={() => requestCancel(r.id)}
+                                            disabled={cancellingRentalId === r.id}
                                         >
                                             <Trash2 className="mr-2 size-4" />
-                                            Atcelt
+                                            {cancellingRentalId === r.id ? 'Atceļ...' : 'Atcelt'}
                                         </Button>
                                     </li>
                                 ))}
@@ -116,6 +133,16 @@ export default function AdminRentalsIndex({ rentals, filters }: PageProps) {
                         )}
                     </CardContent>
                 </Card>
+
+                <ConfirmCancelReservationDialog
+                    open={confirmCancelOpen}
+                    onOpenChange={(open) => {
+                        setConfirmCancelOpen(open)
+                        if (!open) setRentalIdToCancel(null)
+                    }}
+                    onConfirm={confirmCancel}
+                    loading={cancellingRentalId !== null}
+                />
             </div>
         </AppLayout>
     )

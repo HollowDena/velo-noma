@@ -13,6 +13,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/rentals', [RentalController::class, 'store'])
         ->name('rentals.store');
+    Route::delete('/rentals/{rental}', [RentalController::class, 'destroy'])
+        ->name('rentals.destroy');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

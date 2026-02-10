@@ -74,4 +74,15 @@ class RentalController extends Controller
             return back();
         });
     }
+
+    public function destroy(Request $request, Rental $rental)
+    {
+        if ($rental->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $rental->delete();
+
+        return back();
+    }
 }

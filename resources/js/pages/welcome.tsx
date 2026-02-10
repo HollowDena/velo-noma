@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 import { BikeCard } from '@/components/bike-card'
+import { ConfirmCancelReservationDialog } from '@/components/confirm-cancel-reservation-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,8 @@ type Bicycle = {
     frame_size?: string | null
     /** true = free, false = reserved in selected period, null = no period selected */
     available?: boolean | null
+    /** When set, the current user has a reservation for this bike in the selected period */
+    current_user_rental_id?: number | null
 }
 
 type PageProps = {
@@ -67,6 +70,9 @@ export default function Welcome({
     const [frameSize, setFrameSize] = useState(filters.frame_size ?? '')
     const [clientError, setClientError] = useState<string | null>(null)
     const [processingBicycleId, setProcessingBicycleId] = useState<number | null>(null)
+    const [processingRentalId, setProcessingRentalId] = useState<number | null>(null)
+    const [confirmCancelOpen, setConfirmCancelOpen] = useState(false)
+    const [pendingCancelRentalId, setPendingCancelRentalId] = useState<number | null>(null)
 
     const canSearch = useMemo(() => start.length > 0 && end.length > 0, [start, end])
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -143,6 +149,23 @@ export default function Welcome({
                 onError: () => setProcessingBicycleId(null),
             }
         )
+    }
+
+    function requestCancelReservation(rentalId: number) {
+        setClientError(null)
+        setPendingCancelRentalId(rentalId)
+        setConfirmCancelOpen(true)
+    }
+
+    function confirmCancelReservation() {
+        if (pendingCancelRentalId === null) return
+        setProcessingRentalId(pendingCancelRentalId)
+        router.delete(`/rentals/${pendingCancelRentalId}`, {
+            preserveScroll: true,
+            onFinish: () => setProcessingRentalId(null),
+            onError: () => setProcessingRentalId(null),
+        })
+        setPendingCancelRentalId(null)
     }
 
     // Ja RentalController abort(422, '...') netiek ielikts form errors,
@@ -312,9 +335,11 @@ export default function Welcome({
                                     key={b.id}
                                     bike={b}
                                     onReserve={() => reserve(b.id)}
+                                    onCancel={requestCancelReservation}
                                     isLoggedIn={!!auth.user}
                                     hasPeriodSelected={!!start && !!end}
                                     isProcessing={processingBicycleId === b.id}
+                                    isCancelling={processingRentalId === b.current_user_rental_id}
                                 />
                             ))}
                         </div>
@@ -329,6 +354,16 @@ export default function Welcome({
                         )}
                     </section>
                 </div>
+
+                <ConfirmCancelReservationDialog
+                    open={confirmCancelOpen}
+                    onOpenChange={(open) => {
+                        setConfirmCancelOpen(open)
+                        if (!open) setPendingCancelRentalId(null)
+                    }}
+                    onConfirm={confirmCancelReservation}
+                    loading={processingRentalId !== null}
+                />
 
                 <footer className="bg-background text-foreground py-12 border-t border-border">
                     <div className="container mx-auto px-4 text-center">

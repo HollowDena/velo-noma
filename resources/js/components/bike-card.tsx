@@ -9,34 +9,52 @@ type Bicycle = {
     color: string
     frame_size?: string | null
     available?: boolean | null
+    /** When set, the current user has a reservation for this bike in the selected period */
+    current_user_rental_id?: number | null
 }
 
 interface BikeCardProps {
     bike: Bicycle
     onReserve: () => void
+    onCancel?: (rentalId: number) => void
     isLoggedIn: boolean
     hasPeriodSelected: boolean
     isProcessing: boolean
+    isCancelling?: boolean
 }
 
 export function BikeCard({
     bike,
     onReserve,
+    onCancel,
     isLoggedIn,
     hasPeriodSelected,
     isProcessing,
+    isCancelling = false,
 }: BikeCardProps) {
     const name = [bike.brand, bike.model].filter(Boolean).join(' ')
+    const reservedByMe = Boolean(bike.current_user_rental_id)
 
     const buttonContent = () => {
         if (!hasPeriodSelected) return 'Izvēlies periodu'
+        if (reservedByMe) return 'Atcelt rezervāciju'
+        if (!isLoggedIn && hasPeriodSelected && bike.available === false) return 'Rezervēts'
         if (!isLoggedIn) return 'Ielogojies, lai rezervētu'
         if (bike.available === false) return 'Rezervēts'
         return 'Rezervēt'
     }
 
+    const handleClick = () => {
+        if (reservedByMe && bike.current_user_rental_id != null && onCancel) {
+            onCancel(bike.current_user_rental_id)
+        } else {
+            onReserve()
+        }
+    }
+
     const isButtonDisabled =
-        !hasPeriodSelected || !isLoggedIn || bike.available === false || isProcessing
+        !hasPeriodSelected ||
+        (reservedByMe ? isCancelling : (!isLoggedIn || bike.available === false || isProcessing))
 
     return (
         <div className="group bg-white dark:bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-slate-100 dark:border-border">
@@ -91,10 +109,10 @@ export function BikeCard({
                 </div>
 
                 <Button
-                    onClick={onReserve}
+                    onClick={handleClick}
                     disabled={isButtonDisabled}
-                    variant={bike.available === false ? 'destructive' : 'default'}
-                    className="mt-auto w-full py-3 rounded-xl font-bold transition-colors shadow-md hover:shadow-indigo-200 dark:hover:shadow-primary/20"
+                    variant={reservedByMe ? 'outline' : bike.available === false ? 'destructive' : 'default'}
+                    className="mt-auto w-full py-3 rounded-xl font-bold transition-colors shadow-md hover:shadow-indigo-200 dark:hover:shadow-primary/20 cursor-pointer disabled:cursor-not-allowed"
                 >
                     {buttonContent()}
                 </Button>
